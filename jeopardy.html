@@ -1,0 +1,1006 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Y2K Jeopardy (Music)</title>
+  <style>
+    :root{
+      --bg:#ffe6f0;
+      --pink:#ff4aa2;
+      --purple:#2f2f7a;
+      --purple2:#3b3b9a;
+      --tileText:#ffffff;
+      --tileUsed:#bdbdbd;
+      --card:#ffffff;
+      --shadow: 0 10px 30px rgba(0,0,0,.15);
+    }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color:#111;
+    }
+    header{
+      padding:18px 16px 6px;
+      text-align:center;
+      font-weight:800;
+      letter-spacing:.5px;
+    }
+    .wrap{
+      max-width:1100px;
+      margin: 0 auto;
+      padding: 8px 16px 28px;
+    }
+
+    .scoreboard{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+      margin: 10px 0 14px;
+    }
+    .team{
+      background: var(--card);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 12px 12px 10px;
+      border: 3px solid transparent;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .team.active{
+      border-color: var(--pink);
+      box-shadow: 0 0 0 3px rgba(255,74,162,.15), var(--shadow);
+    }
+    .team .name{
+      font-weight:900;
+      font-size: 16px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      line-height: 1.15;
+    }
+
+    .teamIcons{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      font-size: 18px;
+      line-height: 1;
+    }
+    .teamIcons .i{
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,.15));
+    }
+
+    .pill{
+      font-size: 12px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #111;
+      color:#fff;
+      white-space:nowrap;
+    }
+    .score{
+      font-weight:900;
+      font-size: 22px;
+    }
+
+    .board{
+      background: #ffd2e6;
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      border: 6px solid var(--pink);
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+    .cat{
+      background: var(--pink);
+      color: var(--tileText);
+      text-transform: uppercase;
+      font-weight: 900;
+      text-align:center;
+      padding: 12px 8px;
+      border-radius: 12px;
+      letter-spacing:.8px;
+      font-size: 20px;
+    }
+    .tile{
+      background: var(--purple2);
+      color: var(--tileText);
+      border: 0;
+      border-radius: 12px;
+      padding: 18px 6px;
+      font-weight: 900;
+      font-size: 22px;
+      cursor: pointer;
+      box-shadow: 0 8px 16px rgba(0,0,0,.15);
+      transition: transform .06s ease, filter .06s ease, opacity .15s ease;
+    }
+    .tile:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+    .tile:active{ transform: translateY(0px); filter: brightness(.98); }
+    .tile.used{
+      background: var(--tileUsed);
+      cursor:not-allowed;
+      opacity:.8;
+      box-shadow:none;
+    }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      margin: 12px 0 0;
+    }
+    .controls .left{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .btn{
+      border:0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 900;
+      cursor:pointer;
+      background:#111;
+      color:#fff;
+    }
+    .btn.secondary{ background:#444; }
+    .btn.danger{ background:#b00020; }
+    .hint{
+      font-size: 13px;
+      opacity:.8;
+      font-weight:700;
+    }
+
+    .backdrop{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 999;
+    }
+    .backdrop.show{ display:flex; }
+
+    .modal{
+      width: min(900px, 100%);
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modalHead{
+      background: var(--purple);
+      color:#fff;
+      padding: 14px 16px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .modalHead .title{
+      font-weight: 1000;
+      letter-spacing:.3px;
+    }
+    .modalHead .meta{
+      font-size: 13px;
+      opacity:.9;
+      margin-top:4px;
+      font-weight:700;
+    }
+    .modalBody{
+      padding: 14px 16px 16px;
+      display:grid;
+      gap: 12px;
+    }
+    .question{
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.25;
+    }
+    .answerPink{ color: var(--pink); }
+
+    .ytHidden{
+      width:0;
+      height:0;
+      overflow:hidden;
+      position:absolute;
+      left:-9999px;
+      top:-9999px;
+    }
+
+    .clueMedia{ display:grid; grid-template-columns: 1fr; gap:10px; }
+    .clueImgWrap{
+      border-radius: 18px;
+      overflow:hidden;
+      border: 2px solid rgba(0,0,0,.08);
+      box-shadow:
+        0 12px 22px rgba(0,0,0,.18),
+        0 0 0 2px rgba(255,74,162,.10);
+      background:
+        radial-gradient(60% 120% at 20% 0%, rgba(255,74,162,.18), transparent 55%),
+        radial-gradient(80% 160% at 80% 100%, rgba(59,59,154,.16), transparent 55%),
+        linear-gradient(135deg, rgba(0,0,0,.88), rgba(24,24,24,.88));
+      position:relative;
+    }
+    .clueImg{
+      display:block;
+      width:100%;
+      max-height: 260px;
+      object-fit: cover;
+      filter: saturate(1.15) contrast(1.05);
+    }
+    .clueImgGlow{
+      position:absolute;
+      inset: -30%;
+      background: linear-gradient(120deg, transparent 40%, rgba(255,255,255,.10) 52%, transparent 64%);
+      transform: rotate(10deg);
+      animation: gloss 3.6s linear infinite;
+      pointer-events:none;
+      opacity:.65;
+      z-index:1;
+    }
+
+    .answerOverlay{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      text-align:center;
+      background: rgba(0,0,0,.42);
+      backdrop-filter: blur(2px);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .22s ease;
+      z-index:2;
+    }
+    .answerOverlay.show{ opacity:1; }
+
+    .answerText{
+      color:#fff;
+      font-weight:1000;
+      font-size: clamp(22px, 4vw, 40px);
+      line-height:1.12;
+      text-shadow:
+        0 6px 18px rgba(0,0,0,.60),
+        0 0 26px rgba(255,74,162,.35);
+      transform: scale(.80);
+      opacity:0;
+      animation: popIn .35s cubic-bezier(.2,.8,.2,1) forwards;
+    }
+    @keyframes popIn{
+      0%{ transform: scale(.72); opacity:0; }
+      70%{ transform: scale(1.06); opacity:1; }
+      100%{ transform: scale(1); opacity:1; }
+    }
+
+    .audioBar{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      padding:10px 12px;
+      border-radius: 16px;
+      background:
+        radial-gradient(60% 140% at 20% 0%, rgba(255,74,162,.25), transparent 55%),
+        radial-gradient(70% 160% at 80% 100%, rgba(59,59,154,.22), transparent 55%),
+        linear-gradient(135deg, rgba(0,0,0,.92), rgba(20,20,20,.92));
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow:
+        0 10px 22px rgba(0,0,0,.22),
+        0 0 0 2px rgba(255,74,162,.12);
+      position: relative;
+      overflow: hidden;
+    }
+    .audioBar::before{
+      content:"";
+      position:absolute;
+      inset:-40% -60%;
+      background: linear-gradient(120deg, transparent 35%, rgba(255,255,255,.08) 50%, transparent 65%);
+      transform: rotate(12deg);
+      animation: gloss 3.6s linear infinite;
+      pointer-events:none;
+      opacity:.8;
+    }
+    @keyframes gloss{
+      0%{ transform: translateX(-18%) rotate(12deg); }
+      100%{ transform: translateX(18%) rotate(12deg); }
+    }
+
+    .audioBtn{
+      border:0;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-weight: 1000;
+      cursor:pointer;
+      color:#0b0b0b;
+      background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.82));
+      box-shadow:
+        0 10px 18px rgba(0,0,0,.25),
+        0 0 0 2px rgba(255,74,162,.25),
+        0 0 22px rgba(255,74,162,.25);
+      position: relative;
+      z-index: 1;
+    }
+    .audioBtn:active{ transform: translateY(1px); }
+    .audioBtn.restart{
+      box-shadow:
+        0 10px 18px rgba(0,0,0,.25),
+        0 0 0 2px rgba(0,255,214,.22),
+        0 0 22px rgba(0,255,214,.20);
+    }
+
+    .audioNote{
+      color: rgba(255,255,255,.85);
+      font-size: 12px;
+      font-weight: 900;
+      position: relative;
+      z-index: 1;
+    }
+
+    .eq{
+      display:flex;
+      align-items:flex-end;
+      gap:4px;
+      height:22px;
+      padding: 6px 8px;
+      border-radius: 14px;
+      position: relative;
+      z-index: 1;
+      background:
+        radial-gradient(70% 160% at 50% 0%, rgba(0,255,214,.20), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,74,162,.18),
+        0 0 18px rgba(0,255,214,.14);
+      min-width: 150px;
+    }
+    .eq .bar{
+      width:5px;
+      height:6px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #00ffd6, #ff4aa2);
+      filter: drop-shadow(0 0 6px rgba(0,255,214,.55)) drop-shadow(0 0 10px rgba(255,74,162,.35));
+      opacity:.55;
+    }
+    .eq.playing .bar{
+      opacity: 1;
+      animation: eqBounce 520ms ease-in-out infinite;
+    }
+    .eq.playing .bar:nth-child(1){ animation-delay: 0ms; }
+    .eq.playing .bar:nth-child(2){ animation-delay: 70ms; }
+    .eq.playing .bar:nth-child(3){ animation-delay: 140ms; }
+    .eq.playing .bar:nth-child(4){ animation-delay: 210ms; }
+    .eq.playing .bar:nth-child(5){ animation-delay: 280ms; }
+    .eq.playing .bar:nth-child(6){ animation-delay: 350ms; }
+    .eq.playing .bar:nth-child(7){ animation-delay: 420ms; }
+    .eq.playing .bar:nth-child(8){ animation-delay: 490ms; }
+    .eq.playing .bar:nth-child(9){ animation-delay: 560ms; }
+    .eq.playing .bar:nth-child(10){ animation-delay: 630ms; }
+    @keyframes eqBounce{
+      0%   { height: 4px; }
+      20%  { height: 18px; }
+      50%  { height: 7px; }
+      80%  { height: 16px; }
+      100% { height: 4px; }
+    }
+
+    .modalActions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding: 0 16px 16px;
+    }
+    .modalActions .right{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .small{
+      font-size: 12px;
+      opacity:.8;
+      font-weight:700;
+    }
+
+    #winnerBox{
+      background:#fff;
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      width: min(520px, 100%);
+      padding: 18px 18px 16px;
+      text-align:center;
+    }
+    #winnerBox h2{
+      margin: 0 0 8px;
+      font-size: 22px;
+      font-weight: 1000;
+    }
+    #winnerBox .winLine{
+      font-weight: 1000;
+      font-size: 18px;
+      color: var(--pink);
+      margin: 6px 0 12px;
+    }
+    #winnerBox .tieNote{
+      font-size: 12px;
+      font-weight: 800;
+      opacity: .8;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 700px){
+      .grid{ gap:8px; }
+      .tile{ padding: 14px 6px; font-size: 20px; }
+      .score{ font-size: 20px; }
+      .eq{ min-width: 130px; }
+      .eq .bar{ width:4px; }
+      .clueImg{ max-height: 210px; }
+    }
+  </style>
+</head>
+<body>
+  <header style="font-size: 3rem">🎵 Y2K Jeopardy 🎵</header>
+
+  <div class="wrap">
+    <div class="scoreboard" id="scoreboard"></div>
+
+    <div class="board">
+      <div class="grid" id="board"></div>
+      <div class="controls">
+        <div class="left">
+          <button class="btn secondary" id="resetTurn">Reset turn to Cows + Horses</button>
+          <button class="btn danger" id="resetGame">Reset game</button>
+        </div>
+        <div class="hint" id="turnHint"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="backdrop" id="backdrop" hidden aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modalHead">
+        <div>
+          <div class="title" id="modalTitle">Clue</div>
+          <div class="meta" id="modalMeta">Category • Points • Year</div>
+        </div>
+        <button class="btn secondary" id="closeModal">Close</button>
+      </div>
+
+      <div class="modalBody">
+        <div class="question" id="modalQuestion"></div>
+
+        <div class="clueMedia" aria-label="Clue image">
+          <div class="clueImgWrap">
+            <img
+              id="clueImg"
+              class="clueImg"
+              src="https://picsum.photos/seed/2000s-jeopardy/1200/600"
+              alt="Clue image"
+            />
+
+            <!-- ✅ Answer overlay -->
+            <div class="answerOverlay" id="answerOverlay" aria-hidden="true">
+              <div class="answerText" id="answerOverlayText"></div>
+            </div>
+
+            <div class="clueImgGlow" aria-hidden="true"></div>
+          </div>
+          <div class="small" id="clueImgNote">Image is a placeholder — replace with your imported assets.</div>
+        </div>
+
+        <div class="ytHidden">
+          <audio id="audioPlayer" preload="auto" crossorigin="anonymous"></audio>
+        </div>
+
+        <div class="audioBar">
+          <button class="audioBtn" id="audioToggle">Play</button>
+          <button class="audioBtn restart" id="audioRestart" title="Restart from beginning">Restart</button>
+
+          <div class="eq" id="eq" aria-hidden="true" title="Vibes only 😄">
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+          </div>
+
+          <span class="audioNote" id="audioNote">Tap Play for a short clip</span>
+        </div>
+      </div>
+
+      <div class="modalActions">
+        <div class="small" id="modalTeamInfo"></div>
+        <div class="right">
+          <button class="btn" id="revealAnswer">Reveal Answer</button>
+          <button class="btn" id="markCorrect">Correct (+)</button>
+          <button class="btn danger" id="markIncorrect">Incorrect (-)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Winner / Game Over Modal -->
+  <div class="backdrop" id="gameOver" hidden aria-hidden="true">
+    <div id="winnerBox" role="dialog" aria-modal="true" aria-labelledby="winnerTitle">
+      <h2 id="winnerTitle">Game Over</h2>
+      <div class="winLine" id="winnerText">Congrats!</div>
+      <div class="small" id="winnerDetails"></div>
+      <div style="margin-top:14px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+        <button class="btn secondary" id="closeWinner">Close</button>
+        <button class="btn danger" id="resetFromWinner">Reset game</button>
+      </div>
+      <div class="tieNote" id="tieNote" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script>
+const CLUES = [
+  { category:"2000s POP", points:200, year:2000, answer:'Oops!... I Did It Again by Britney Spears', link:"https://static.wixstatic.com/mp3/cc60ec_c07c6998dbd848a6af59cfc113fb9066.mp3" },  
+  { category:"2000s POP", points:400, year:2009, answer:'I Gotta Feeling" by The Black Eyed Peas', link:"https://static.wixstatic.com/mp3/cc60ec_8774be9d148741cdaa4ecbcf7136de51.mp3" },
+  { category:"2000s POP", points:600, year:2007, answer:'Umbrella by Rihanna ft. Jay-Z', link:"https://static.wixstatic.com/mp3/cc60ec_fc1980e5d71b4f8888d4cfb79eb748c1.mp3" },
+  { category:"2000s POP", points:800, year:2005, answer:'Since U Been Gone by Kelly Clarkson', link:"https://static.wixstatic.com/mp3/cc60ec_acfaadaa5e37476eb4ae2ce01fa5d75f.mp3" },
+
+  { category:"GET MONEY", points:200, year:2003, answer:'In Da Club by 50 Cent', link:"https://static.wixstatic.com/mp3/cc60ec_6ba93e3aca9a44ff914ccfa7dd260356.mp3" },
+  { category:"GET MONEY", points:400, year:2002, answer:'I Need A Dollar by Aloe Blacc', link:"https://static.wixstatic.com/mp3/cc60ec_f567ac04489045c083b49ea84c79ce00.mp3" },
+  { category:"GET MONEY", points:600, year:2004, answer:'Gold Digger by Kanye West ft. Jamie Foxx', link:"https://static.wixstatic.com/mp3/cc60ec_04b9d1832efa4320b6f48467ef8196fa.mp3" },
+  { category:"GET MONEY", points:800, year:2010, answer:'"Hot In Herre" by Nelly', link:"https://static.wixstatic.com/mp3/cc60ec_187d853b488343998c8217ccf7e30b0b.mp3" },
+
+  { category:"CHICK FLICK MOVIES", points:200, year:1997, answer:'"Perfect Day" by Hoku (From Legally Blonde)', link:"https://static.wixstatic.com/mp3/cc60ec_6b33d50b24894fdfade11c5470d2a8fe.mp3" },
+  { category:"CHICK FLICK MOVIES", points:400, year:2004, answer:'"Breakaway" by Kelly Clarkson (From The Princess Diaries 2)', link:"https://static.wixstatic.com/mp3/cc60ec_c5840941ec4f4543a5ec9481b52a6a3b.mp3" },
+  { category:"CHICK FLICK MOVIES", points:600, year:2002, answer:'"A Thousand Miles" by Vanessa Carlton (From White Chicks)', link:"https://static.wixstatic.com/mp3/cc60ec_95ae26ff1a5847c39bdd03f09e1b5b75.mp3" },
+  { category:"CHICK FLICK MOVIES", points:800, year:2003, answer:'"Milkshake" by Kelis (Featured in Mean Girls)', link:"https://static.wixstatic.com/mp3/cc60ec_efdf59e832204e50b01a541aba3ab039.mp3" },
+
+  { category:"PUNK ROCK", points:200, year:2001, answer:'"In The End" by Linkin Park', link:"https://static.wixstatic.com/mp3/cc60ec_5f99b312d5a145a7af31896f38848488.mp3" },
+  { category:"PUNK ROCK", points:400, year:2005, answer:'"Wake Me Up When September Ends" by Green Day', link:"https://static.wixstatic.com/mp3/cc60ec_6f47f794addf4ff9b6832d11343c96be.mp3" },
+  { category:"PUNK ROCK", points:600, year:2002, answer:'"Sk8er Boi" by Avril Lavigne', link:"https://static.wixstatic.com/mp3/cc60ec_fa90a596bf874403a91db13d1260c9ed.mp3" },
+  { category:"PUNK ROCK", points:800, year:2000, answer:'"Teenage Dirtbag" by Wheatus', link:"https://static.wixstatic.com/mp3/cc60ec_0533cd8f9bbf4972bdb9be73a774b1c6.mp3" },
+
+  { category:"BROKEN HEARTS", points:200, year:2006, answer:'"Irreplaceable" by Beyoncé', link:"https://static.wixstatic.com/mp3/cc60ec_08e36a3193bb481c861071f92ff49ff2.mp3" },
+  { category:"BROKEN HEARTS", points:400, year:2004, answer:'"Potential Break Up Song" by Aly & AJ', link:"https://static.wixstatic.com/mp3/cc60ec_493c9d14673f4fd392a0520a8023da64.mp3" },
+  { category:"BROKEN HEARTS", points:600, year:2002, answer:'"Cry Me a River" by Justin Timberlake', link:"https://static.wixstatic.com/mp3/cc60ec_c38be4340780447c927b2120cd8573c0.mp3" },
+  { category:"BROKEN HEARTS", points:800, year:2005, answer:'"We Belong Together" by Mariah Carey', link:"https://static.wixstatic.com/mp3/cc60ec_709eeda3cb624a5bbe5dc12c992b77fe.mp3" },
+];
+
+let audioStopTimer = null;
+let currentClipMs = 5000;
+const audioEl = document.getElementById("audioPlayer");
+
+const CATEGORY_IMAGES = {
+  "2000s POP": "{insert path to image}",
+  "GET MONEY": "{insert path to image}",
+  "CHICK FLICK MOVIES": "{insert path to image}",
+  "PUNK ROCK": "{insert path to image}",
+  "BROKEN HEARTS": "{insert path to image}",
+};
+
+const PLACEHOLDER_IMG = "https://picsum.photos/seed/2000s-jeopardy/1200/600";
+
+let lastFocusedEl = null;
+
+const TEAMS = ["Cows + Horses","Monkeys + Snakes","Dogs + Ducks","Sheep + Donkeys"];
+
+const TEAM_ICONS = {
+  "Cows + Horses": ["🐮","🐴"],
+  "Monkeys + Snakes": ["🐵","🐍"],
+  "Dogs + Ducks": ["🐶","🦆"],
+  "Sheep + Donkeys": ["🐑", "𓃘"],
+};
+
+function safeEmoji(e){
+  if (e === "🫏"){
+    return "🫏";
+  }
+  return e;
+}
+
+let teamIndex = 0;
+let scores = { "Cows + Horses":0, "Monkeys + Snakes":0, "Dogs + Ducks":0, "Sheep + Donkeys":0 };
+
+const categories = Array.from(new Set(CLUES.map(c => c.category)));
+const pointsRows = [200, 400, 600, 800];
+
+const clueMap = new Map();
+for (const clue of CLUES) clueMap.set(`${clue.category}__${clue.points}`, { ...clue, used:false });
+
+const scoreboardEl = document.getElementById("scoreboard");
+const boardEl = document.getElementById("board");
+const turnHintEl = document.getElementById("turnHint");
+
+const backdropEl = document.getElementById("backdrop");
+const closeModalBtn = document.getElementById("closeModal");
+const modalTitleEl = document.getElementById("modalTitle");
+const modalMetaEl = document.getElementById("modalMeta");
+const modalQuestionEl = document.getElementById("modalQuestion");
+const modalTeamInfoEl = document.getElementById("modalTeamInfo");
+
+const revealAnswerBtn = document.getElementById("revealAnswer");
+const markCorrectBtn = document.getElementById("markCorrect");
+const markIncorrectBtn = document.getElementById("markIncorrect");
+
+const resetTurnBtn = document.getElementById("resetTurn");
+const resetGameBtn = document.getElementById("resetGame");
+
+const audioToggleBtn = document.getElementById("audioToggle");
+const audioRestartBtn = document.getElementById("audioRestart");
+const audioNoteEl = document.getElementById("audioNote");
+const eqEl = document.getElementById("eq");
+
+const clueImgEl = document.getElementById("clueImg");
+const clueImgNoteEl = document.getElementById("clueImgNote");
+
+const gameOverEl = document.getElementById("gameOver");
+const winnerTextEl = document.getElementById("winnerText");
+const winnerDetailsEl = document.getElementById("winnerDetails");
+const closeWinnerBtn = document.getElementById("closeWinner");
+const resetFromWinnerBtn = document.getElementById("resetFromWinner");
+const tieNoteEl = document.getElementById("tieNote");
+
+const answerOverlayEl = document.getElementById("answerOverlay");
+const answerOverlayTextEl = document.getElementById("answerOverlayText");
+
+let activeClueKey = null;
+
+function currentTeam(){ return TEAMS[teamIndex]; }
+
+function advanceTurn(){
+  teamIndex = (teamIndex + 1) % TEAMS.length;
+  renderScoreboard();
+  renderTurnHint();
+}
+
+function renderTurnHint(){
+  turnHintEl.textContent = `Current turn: Team ${currentTeam()} (auto-rotates after each clue)`;
+}
+
+function renderScoreboard(){
+  scoreboardEl.innerHTML = "";
+  for (const t of TEAMS){
+    const div = document.createElement("div");
+    div.className = "team" + (t === currentTeam() ? " active" : "");
+
+    const icons = TEAM_ICONS[t] || [];
+    let iconsHtml = "";
+    if (icons.length){
+      const safe = icons.map(safeEmoji).map(i => `<span class="i">${i}</span>`).join("");
+      iconsHtml = `<span class="teamIcons" aria-hidden="true">${safe}</span>`;
+    }
+
+    div.innerHTML = `
+      <div class="name">
+        ${iconsHtml}
+        Team ${t}
+        <span class="pill">${t === currentTeam() ? "TURN" : " "}</span>
+      </div>
+      <div class="score">${scores[t]}</div>
+    `;
+    scoreboardEl.appendChild(div);
+  }
+}
+
+function clipMsForPoints(points){
+  const map = { 200: 8000, 400: 6000, 600: 4000, 800: 2000 };
+  return map[points] ?? 5000;
+}
+
+function setPlayingUI(isPlaying){
+  if (isPlaying){
+    eqEl.classList.add("playing");
+    audioToggleBtn.textContent = "Pause";
+  } else {
+    eqEl.classList.remove("playing");
+    audioToggleBtn.textContent = "Play";
+  }
+}
+
+function imageForClue(clue){
+  return CATEGORY_IMAGES[clue.category] || PLACEHOLDER_IMG;
+}
+
+function cleanupAudio(){
+  if (audioStopTimer) { clearTimeout(audioStopTimer); audioStopTimer = null; }
+  if (audioEl){
+    try { audioEl.pause(); } catch(e) {}
+    try { audioEl.removeAttribute("src"); audioEl.load(); } catch(e) {}
+  }
+  setPlayingUI(false);
+  audioNoteEl.textContent = "Tap Play for a short clip";
+  currentClipMs = 5000;
+}
+
+function allTilesUsed(){
+  return Array.from(clueMap.values()).every(c => c.used);
+}
+
+function showWinner(){
+  const entries = TEAMS.map(t => [t, scores[t]]);
+  const maxScore = Math.max(...entries.map(([,s]) => s));
+  const winners = entries.filter(([,s]) => s === maxScore).map(([t]) => t);
+
+  tieNoteEl.style.display = "none";
+
+  if (winners.length === 1){
+    winnerTextEl.textContent = `Congrats! Team ${winners[0]} wins!`;
+    winnerDetailsEl.textContent = `Final score: ${maxScore}`;
+  } else {
+    winnerTextEl.textContent = `Congrats! It's a tie!`;
+    winnerDetailsEl.textContent = `Winning score: ${maxScore}`;
+    tieNoteEl.style.display = "block";
+    tieNoteEl.textContent = `Tied teams: ${winners.map(t => `Team ${t}`).join(", ")}`;
+  }
+
+  gameOverEl.hidden = false;
+  gameOverEl.classList.add("show");
+  gameOverEl.setAttribute("aria-hidden","false");
+  try { closeWinnerBtn.focus(); } catch(e) {}
+}
+
+function openModalForClue(key){
+  const clue = clueMap.get(key);
+  if (!clue || clue.used) return;
+
+  lastFocusedEl = document.activeElement;
+  activeClueKey = key;
+
+  modalTitleEl.textContent = clue.category;
+  modalMetaEl.textContent = `Points: ${clue.points} • Year: ${clue.year}`;
+  modalQuestionEl.textContent = `Name the song OR artist`;
+  modalQuestionEl.classList.remove("answerPink");
+  modalTeamInfoEl.textContent = `Answering team: Team ${currentTeam()}`;
+
+  answerOverlayEl.classList.remove("show");
+  answerOverlayTextEl.textContent = "";
+
+  const imgSrc = imageForClue(clue);
+  clueImgEl.src = imgSrc;
+  clueImgEl.alt = `Category image for ${clue.category}`;
+  clueImgNoteEl.textContent = CATEGORY_IMAGES[clue.category]
+    ? ``
+    : "Missing category image link — using placeholder.";
+
+  cleanupAudio();
+
+  currentClipMs = clipMsForPoints(clue.points);
+  audioNoteEl.textContent = `Loading clip...`;
+
+  if (clue.link && clue.link.toLowerCase().includes(".mp3")){
+    audioEl.src = clue.link;
+    audioEl.currentTime = 0;
+    audioNoteEl.textContent = `Ready. Tap Play for ${Math.round(currentClipMs/1000)}s`;
+  } else {
+    audioNoteEl.textContent = "Missing/invalid MP3 link";
+  }
+
+  revealAnswerBtn.textContent = "Reveal Answer";
+  revealAnswerBtn.disabled = false;
+
+  backdropEl.hidden = false;
+  backdropEl.classList.add("show");
+  backdropEl.setAttribute("aria-hidden","false");
+  try { closeModalBtn.focus(); } catch(e) {}
+}
+
+function closeModal(){
+  try{
+    (lastFocusedEl && typeof lastFocusedEl.focus === "function")
+      ? lastFocusedEl.focus()
+      : resetTurnBtn.focus();
+  }catch(e){}
+
+  backdropEl.classList.remove("show");
+  backdropEl.hidden = true;
+  backdropEl.setAttribute("aria-hidden","true");
+
+  answerOverlayEl.classList.remove("show");
+  answerOverlayTextEl.textContent = "";
+
+  cleanupAudio();
+  activeClueKey = null;
+}
+
+function markUsed(key){
+  const clue = clueMap.get(key);
+  if (!clue) return;
+  clue.used = true;
+  clueMap.set(key, clue);
+
+  const btn = document.querySelector(`[data-clue-key="${CSS.escape(key)}"]`);
+  if (btn){
+    btn.classList.add("used");
+    btn.disabled = true;
+    btn.textContent = "—";
+  }
+}
+
+function maybeEndGame(){
+  if (allTilesUsed()){
+    closeModal();
+    showWinner();
+  }
+}
+
+function resetGame(){
+  scores = { "Cows + Horses":0, "Monkeys + Snakes":0, "Dogs + Ducks":0, "Sheep + Donkeys":0 };
+  teamIndex = 0;
+  for (const [k,v] of clueMap.entries()) clueMap.set(k, { ...v, used:false });
+  buildBoard();
+  renderScoreboard();
+  renderTurnHint();
+  closeModal();
+}
+
+function buildBoard(){
+  boardEl.innerHTML = "";
+
+  for (const cat of categories){
+    const d = document.createElement("div");
+    d.className = "cat";
+    d.textContent = cat;
+    boardEl.appendChild(d);
+  }
+
+  for (const pts of pointsRows){
+    for (const cat of categories){
+      const key = `${cat}__${pts}`;
+      const clue = clueMap.get(key);
+
+      const btn = document.createElement("button");
+      btn.className = "tile";
+      btn.type = "button";
+      btn.textContent = clue ? pts : "";
+      btn.dataset.clueKey = key;
+
+      if (!clue || clue.used){
+        btn.classList.add("used");
+        btn.disabled = true;
+        btn.textContent = "—";
+      } else {
+        btn.addEventListener("click", () => openModalForClue(key));
+      }
+
+      boardEl.appendChild(btn);
+    }
+  }
+}
+
+audioToggleBtn.addEventListener("click", async () => {
+  if (!audioEl || !audioEl.src) return;
+
+  if (!audioEl.paused){
+    audioEl.pause();
+    setPlayingUI(false);
+    if (audioStopTimer) { clearTimeout(audioStopTimer); audioStopTimer = null; }
+    return;
+  }
+
+  try{
+    await audioEl.play();
+    setPlayingUI(true);
+
+    if (audioStopTimer) clearTimeout(audioStopTimer);
+    audioStopTimer = setTimeout(() => {
+      audioEl.pause();
+      setPlayingUI(false);
+      audioStopTimer = null;
+    }, currentClipMs);
+  } catch(e){
+    audioNoteEl.textContent = "Playback blocked — click Play again.";
+    setPlayingUI(false);
+  }
+});
+
+audioRestartBtn.addEventListener("click", async () => {
+  if (!audioEl || !audioEl.src) return;
+
+  if (audioStopTimer) { clearTimeout(audioStopTimer); audioStopTimer = null; }
+  audioEl.currentTime = 0;
+
+  try{
+    await audioEl.play();
+    setPlayingUI(true);
+
+    audioStopTimer = setTimeout(() => {
+      audioEl.pause();
+      setPlayingUI(false);
+      audioStopTimer = null;
+    }, currentClipMs);
+  } catch(e){
+    setPlayingUI(false);
+  }
+});
+
+audioEl.addEventListener("pause", () => setPlayingUI(false));
+audioEl.addEventListener("ended", () => setPlayingUI(false));
+
+revealAnswerBtn.addEventListener("click", () => {
+  if (!activeClueKey) return;
+  const clue = clueMap.get(activeClueKey);
+  if (!clue) return;
+
+  answerOverlayTextEl.textContent = clue.answer;
+
+  answerOverlayEl.classList.add("show");
+  answerOverlayTextEl.style.animation = "none";
+  void answerOverlayTextEl.offsetHeight;
+  answerOverlayTextEl.style.animation = "";
+
+  revealAnswerBtn.disabled = true;
+  revealAnswerBtn.textContent = "Answer Revealed";
+});
+
+function applyResult(isCorrect){
+  if (!activeClueKey) return;
+  const clue = clueMap.get(activeClueKey);
+  if (!clue) return;
+
+  markUsed(activeClueKey);
+
+  const t = currentTeam();
+  scores[t] += isCorrect ? clue.points : -clue.points;
+
+  renderScoreboard();
+
+  if (allTilesUsed()){
+    maybeEndGame();
+    return;
+  }
+
+  advanceTurn();
+  closeModal();
+}
+
+markCorrectBtn.addEventListener("click", () => applyResult(true));
+markIncorrectBtn.addEventListener("click", () => applyResult(false));
+closeModalBtn.addEventListener("click", closeModal);
+
+backdropEl.addEventListener("click", (e) => {
+  if (e.target === backdropEl) closeModal();
+});
+
+resetTurnBtn.addEventListener("click", () => {
+  teamIndex = 0;
+  renderScoreboard();
+  renderTurnHint();
+  if (activeClueKey) modalTeamInfoEl.textContent = `Answering team: Team ${currentTeam()}`;
+});
+
+resetGameBtn.addEventListener("click", () => {
+  if (confirm("Reset the entire game (scores + board)?")) resetGame();
+});
+
+closeWinnerBtn.addEventListener("click", () => {
+  gameOverEl.classList.remove("show");
+  gameOverEl.hidden = true;
+  gameOverEl.setAttribute("aria-hidden","true");
+  try { resetGameBtn.focus(); } catch(e) {}
+});
+
+resetFromWinnerBtn.addEventListener("click", () => {
+  gameOverEl.classList.remove("show");
+  gameOverEl.hidden = true;
+  gameOverEl.setAttribute("aria-hidden","true");
+  resetGame();
+});
+
+buildBoard();
+renderScoreboard();
+renderTurnHint();
+  </script>
+</body>
+</html>
